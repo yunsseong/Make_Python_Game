@@ -2,26 +2,41 @@
 import random
 import copy
 import sys
-#Generating Map
 
-def print_mine_map_debug():
-    for i in range(size_of_map):
-        print(" ".join(map(str,mine_map_show[i])) + "    " + " ".join(map(str, (mine_map_sol[i]))))
-
-def print_mine_map(map_obj):
-    for i in map_obj:
-        for j in i:
-            print(j, end=" ")
+#맵을 출력하는 함수가 일반 맵 출력용과 디버그 맵 출력용 두 개가 있었는데
+#현재 게임이 일반 모드인지 디버그 모드인지 확인하는 글로벌 변수를 두어서 하나의 함수에서 두 개의 기능을 상황에 따라 사용할 수 있도록 설계
+def print_map(map_obj):
+    if GAME_MODE == NOMAL:
+        for i in map_obj:
+            for j in i:
+            print(j, end = " ")
         print("")
-        
-def mine_map_property():
-    global size_of_map 
-    #size_of_map = int(input("Input size of map : "))
-    size_of_map = 10
-    global num_of_mine 
-    #num_of_mine = int(input("Input number of mine : ")) 
-    num_of_mine = 10
+    elif GAME_MODE == DEBUG:
+        for i in range(size_of_map):
+            print(" ".join(map(str,mine_map_show[i])) + "    " + " ".join(map(str, (mine_map_sol[i]))))
 
+#숫자가 아닌 다른 것을 입력하면 오류가 발생함. 사용자가 입력한 값이 숫자인지 확인하는 과정을 추가
+#여러개의 인수를 넣는 경우도 보호해야할 필요가 있음
+def safe_int_input(print_str):
+    input_tmp = input(print_str)
+    if input_tmp.isdigit() == True:
+        return int(input_tmp)
+    else:
+        print("Error : You should input digit number")
+        safe_int_input(print_str)
+
+
+#디버그 모드일 경우 기본맵과 기본지뢰 갯수대로 맵 속성을 설정
+def set_map_property():
+    global size_of_map, num_of_mine
+    if GAME_MODE == NOMAL:
+        print_str = "Input size of map : "
+        size_of_map = safe_int_input(print_str)
+        print_str = "Input number of mines : "
+        num_of_mine = safe_int_input(print_str)
+    elif GAME_MODE == DEBUG:
+        size_of_map, num_of_mine = 10,10
+         
 def empty_mine_map_gen():
     map_horiz = []
     empty_mine_map = []
