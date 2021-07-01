@@ -5,6 +5,12 @@ import sys
 global GAME_MODE
 GAME_MODE = "DEBUG"
 
+# 게임에 추가되면 좋을 것 같은 기능
+# 이전으로 한턴 돌리기 기능(UNDO)
+# 로그인 기능
+# 게임 이어하기
+
+
 #역할 : 맵을 터미널에 출력하는 함수
 def print_map(*map_obj):
     if GAME_MODE == "NOMAL":
@@ -101,25 +107,10 @@ def zero(y, x):
                         mine_map_show[y+a][x+b] = mine_map_sol[y+a][x+b]
     for y,x in cord_zero:
         zero(y,x)
-
-def dig_zero(y, x):
-    for a in [-1, 0, 1]:
-            for b in [-1, 0, 1]:
-                if y+a >= 0 and x+b >= 0 and y+a < size_of_map and x+b < size_of_map:
-                    mine_map_show[y+a][x+b] = mine_map_sol[y+a][x+b]
-
-def zero(y, x):
-    for a in [-1, 0, 1]:
-            for b in [-1, 0, 1]:
-                if y+a >= 0 and x+b >= 0 and y+a < size_of_map and x+b < size_of_map:
-                    if mine_map_sol[y+a][x+b] == 0:
-                        dig_zero(y+a, x+b)
-                    else:
-                        mine_map_show[y+a][x+b] = mine_map_sol[y+a][x+b]
-                        
+                    
 def dig(y, x):
     if mine_map_sol[y][x] == "*":
-        print_mine(mine_map_sol)
+        print_map(mine_map_sol)
         game_end("BAD")
     elif mine_map_sol[y][x] == 0:
         zero(y,x)
@@ -129,9 +120,10 @@ def dig(y, x):
         mine_map_show[y][x] = mine_map_sol[y][x]
         print_map(mine_map_show)
         ask_command()
-        
-def flag(y,x):
-    if mine_map_show[y][x] in [1,2,3,4,5,6,7,8]:
+
+#버그 : flag 함수가 실행안되고 dig만 계속 실행되는 버그
+def flag(y, x):
+    if mine_map_show[y][x].isdigit():
         print("Error : You can't raise flag here")
         ask_command()
     elif mine_map_show[y][x] == "^":
@@ -166,14 +158,16 @@ def safe_input_commend(num_params, print_str, params_type):
 
 # 추후 수정사항 : 입력받고 다 소문자로 변환할 것, 좌표값 입력받는 것도 자연수 값만 받도록 조정할 것  
 def ask_command():
-    user_commend = input("Dig(D) Flag(F) End(E) Check(C) : ").split()
-    if user_commend[0] in ["d", "D", "dig", "f", "F", "flag", "c", "C", "check"]:
+    user_commend = input("Dig(D) Flag(F) End(E) : ").split()
+    if user_commend[0] in ["d", "D", "dig", "f", "F", "flag"]:
             if len(user_commend) == 3 and user_commend[0] not in ["e", "E"]:
-                com, x, y = [user_commend[0], int(user_commend[1])-1, int(user_commend[2])-1]
-                act_func = {"d": dig(y, x),"D": dig(y, x), "dig" : dig(y, x), "flag" : flag(y, x), "f": flag(y, x),"F": flag(y, x)}.get(com)
-                act_fun(y, x)
-            elif len(user_commend) == 1 and user_commend[0] in ["c","C", "check"]:
-                check()
+                com, x, y = user_commend[0], int(user_commend[1])-1, int(user_commend[2])-1
+                func_list = [dig(y,x), flag(y,x)]
+                func_num = {"d": 0,"D": 0, "dig" : 0, "flag" : 1, "f": 1,"F": 1}.get(com)
+                #func_list[func_num](y, x)
+                act_func = func_list[1]
+                act_func(y,x)
+                map_check()
             else:
                 print("Error : You have to input x, y collectly")
                 ask_command()    
@@ -184,27 +178,25 @@ def ask_command():
         ask_command()      
 
 #추후 수정사항 : check는 한 턴이 끝날때 마다 자동으로 하다록 변경
-def check():
-    cnt = 0
+def map_check():
+    cnt_flag = 0
+    cnt_hash = 0
     for i in mine_map_show:
         for j in i:
             if j == "^":
-                cnt+=1
-    if cnt == num_of_mine:
+                cnt_flag+=1
+            if j == "#":
+                cnt_hash+=1
+                
+    if cnt_flag == num_of_mine and cnt_hash == 0:
         for i in ran_mine:
             if mine_map_show[i[0]][i[1]] != "^":
-                print("Oops.. You raise flage on the wrong places, Try again")
-                ask_command()
-            else:               
-                game_end("HAPPY")
-        
-    elif cnt < num_of_mine:
-        print("Oops.. You still have mine to dig")
-        ask_command()
+                ask_command()              
+        game_end("HAPPY")
     else:
-        print("Oops.. You raise flag more than mine")
         ask_command()
-        
+
+
 def MAIN_MENU():
     user_dicision = input("Play(P) Setting(S) Exit(E) : ")
     if user_dicision in ["P", "p"]:
